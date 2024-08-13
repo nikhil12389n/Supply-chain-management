@@ -1,90 +1,87 @@
 import React, { useContext, useEffect, useState } from 'react';
 import Navbar from '../Navbar';
 import ConnectionContext from '../Connection/Connection';
-import $ from "jquery";
+import "./receivedreq.css";
+import { useUser } from '../ContextProvider';
 
 export default function ReceivedReq() {
     const { account, contract } = useContext(ConnectionContext);
-    const [contractdata,setcontractdata]=useState([]);
-    useEffect(()=>{
-        let table=$("#receiveddgst").DataTable();
-        const fetchdata = async () => {
-            try {
-                const data = await contract.methods.getallhashes(localStorage.getItem("rolename"),1).call();
+    const [contractData, setContractData] = useState([]);
+    const rolename = useUser();
 
-               let findata=[];
-               for(let i=0;i<data.length;i++){
-                let temp=await contract.methods.getallreceivedrole(localStorage.getItem("rolename"),data[i]).call();
-                findata.push(temp);
-               }
-               console.log(findata);
-               table.clear();
-               for(let i=0;i<findata.length;i++){
-                if(findata[i].status!="pending" && findata[i].status!="accepted"){
-                    try{
-                        let d=await contract.methods.check(findata[i].from,findata[i].hash).call();
-                        if(d==true){
-                            table.row.add([findata[i].hash,findata[i].from,findata[i].origin,Object.values(findata[i].products).join(","),Object.values(findata[i].quantities).join(","),findata[i].endtime,'<button class="btn btn-success accept-dgst">Accept</button>','<button class="btn btn-dark">Send to manuf</button>']);
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const data = await contract.methods.getallhashes(rolename, 1).call();
+
+                let findata = [];
+                for (let i = 0; i < data.length; i++) {
+                    let temp = await contract.methods.getallreceivedrole(rolename, data[i]).call();
+                    findata.push(temp);
+                }
+                
+                findata = await Promise.all(findata.map(async (item) => {
+                    const quantities = Object.values(item.quantities)
+                        .map(qty => parseInt(qty, 10))
+                        .join(", ");
+
+                    let action = null;
+
+                    if (item.status !== "pending" && item.status !== "accepted") {
+                        try {
+                            let d = await contract.methods.check(item.from, item.hash).call();
+                            if (d) {
+                                action = (
+                                    <button className="btn btn-success" onClick={() => handleAccept(item)}>Accept</button>
+                                );
+                            }
+                        } catch (err) {
+                            console.log(err);
                         }
+                    } else if (item.status !== "accepted") {
+                        action = (
+                            <button className="btn btn-dark" onClick={() => handleSendToDivisions(item)}>Send to divisions</button>
+                        );
                     }
-                    catch(err){
-                        console.log(err);
-                    }
-                }
-                else{
-                    if(findata[i].status!="accepted"){
-                        table.row.add([findata[i].hash,findata[i].from,findata[i].origin,Object.values(findata[i].products).join(","),Object.values(findata[i].quantities).join(","),findata[i].endtime,'<button class="btn btn-dark send-divisions">Send to divisions</button>',findata[i].status]);
-                    }
-                }
-               }
-               table.draw();
-                setcontractdata(data);
+
+                    return {
+                        ...item,
+                        quantities,
+                        action,
+                    };
+                }));
+
+                findata.reverse();
+                setContractData(findata);
             } catch (err) {
                 console.log(err);
             }
         };
-        $("#receiveddgst").on('click','.accept-dgst',async function() {
-            let row=$(this).closest("tr");
-            let rowdata=table.row(row).data();
-            console.log(rowdata);
 
-            try{
-                let data=await contract.methods.dgstaccept(rowdata[0],rowdata[2],"accepted by dgst").send({from:account});
-            }
-            catch(err){
-                console.log(err);
-            }
-        });
+        fetchData();
+    }, [contract, account, rolename]);
 
-        $("#receiveddgst").on('click','.send-divisions',async function(){
-            let row=$(this).closest("tr");
-            let rowdata=table.row(row).data();
+    const handleAccept = async (data) => {
+        try {
+            await contract.methods.dgstaccept(data.hash, data.origin).send({ from: account });
+        } catch (err) {
+            console.log(err);
+        }
+    };
 
-            //string memory from,string memory hash,string memory origin,string[] memory p,uint[] memory q,string memory endtime
-            console.log(rowdata);
-            const products=rowdata[3].split(",");
-            console.log(products)
-              const quantities=rowdata[4].split(",");
-              for(let i=0;i<quantities.length;i++){
-                  quantities[i]=parseInt(quantities[i],10);
-              }
-            try{
-                let data=await contract.methods.dgstsentodivisions(rowdata[1],rowdata[0],rowdata[2],products,quantities,rowdata[5]).send({from:account});
-            }
-            catch(err){
+    const handleSendToDivisions = async (data) => {
+        try {
+            await contract.methods.dgstsentodivisions(data.from, data.hash, data.origin, Object.values(data.products), Object.values(data.quantities), data.endtime).send({ from: account });
+        } catch (err) {
+            console.log(err);
+        }
+    };
 
-            }
-        })
-
-        fetchdata();
-    },[]);
     return (
         <>
-
-        <Navbar/>
-        <h1>Received Request</h1>
-
-            <table id="receiveddgst" className="table tablereqforsupply">
+            <Navbar />
+            <h1 className="title">Received Requests</h1>
+            <table className="table tablereceived">
                 <thead>
                     <tr>
                         <th>Hash</th>
@@ -93,15 +90,25 @@ export default function ReceivedReq() {
                         <th>Products</th>
                         <th>Quantities</th>
                         <th>End time</th>
-                        <th>Function</th>
-                        <th>Accept/Send to manuf</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
-                   
+                    {contractData.map((item, index) => (
+                        (item.action) && (
+                            <tr key={index}>
+                                <td>{item.hash}</td>
+                                <td>{item.from}</td>
+                                <td>{item.origin}</td>
+                                <td>{Object.values(item.products).join(", ")}</td>
+                                <td>{item.quantities}</td>
+                                <td>{item.endtime}</td>
+                                <td>{item.action}</td>
+                            </tr>
+                        )
+                    ))}
                 </tbody>
             </table>
         </>
     );
 }
-

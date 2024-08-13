@@ -1,10 +1,12 @@
 body{
-    background-color:rgb(242, 250, 229);
+    background-color:rgb(238, 246, 255);
     min-height: 100vh;
     min-width: 100vw;
     margin: 0;
     padding: 0;
-    overflow: hidden;
-    background:linear-gradient(to bottom,rgb(242, 242, 250),rgb(234, 234, 243),rgb(241, 239, 224));
-    
+    margin-top: 60px;
+}
+
+.tablereceived th,td{
+    border: 1px solid black;
 }

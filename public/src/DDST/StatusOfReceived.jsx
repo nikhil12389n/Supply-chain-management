@@ -3,30 +3,31 @@ import ConnectionContext from "../Connection/Connection";
 import Navbar from "../Navbar";
 import $ from "jquery";
 import 'datatables.net';
+import { useUser } from "../ContextProvider";
 
 export default function StatusOfReceived() {
     const { account, contract } = useContext(ConnectionContext);
     const [contractdata, setcontractdata] = useState([]);
 
-   
+   const rolename=useUser();
     useEffect(() => {
        const table= $('#statusofreceiveddiv').DataTable();
         const fetchdata = async () => {
             try {
-                const data = await contract.methods.getallhashes(localStorage.getItem("rolename"),1).call();
+                const data = await contract.methods.getallhashes(rolename,1).call();
 
                let findata=[];
                for(let i=0;i<data.length;i++){
-                let temp=await contract.methods.getallreceivedrole(localStorage.getItem("rolename"),data[i]).call();
+                let temp=await contract.methods.getallreceivedrole(rolename,data[i]).call();
                 findata.push(temp);
                }
-               console.log(findata[0]);
-               table.clear();
+               let updatedData1=[];
                for(let i=0;i<findata.length;i++){
-                table.row.add([findata[i].hash,findata[i].from,findata[i].origin,Object.values(findata[i].products).join(","),Object.values(findata[i].quantities).join(","),findata[i].endtime,findata[i].status]);
+                updatedData1.push({hash:findata[i].hash,from:findata[i].from,origin:findata[i].origin,products:Object.values(findata[i].products).join(","),quantities:Object.values(findata[i].quantities).join(","),endtime:findata[i].endtime,status:findata[i].status});
                }
-               table.draw();
-                setcontractdata(data);
+               updatedData1.reverse();
+               
+                setcontractdata(updatedData1);
             } catch (err) {
                 console.log(err);
             }
@@ -43,24 +44,28 @@ export default function StatusOfReceived() {
     return (
         <>
             <Navbar />
-            <h1>Status Of Received</h1>
-
-            <table id="statusofreceiveddiv" className="table tablereqforsupply">
-                <thead>
-                    <tr>
-                        <th>Hash</th>
-                        <th>From</th>
-                        <th>Origin</th>
-                        <th>Products</th>
-                        <th>Quantities</th>
-                        <th>End time</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                   
-                </tbody>
-            </table>
+            <h1 className="title">Status Of Received</h1>
+            <div className="container">
+        <div className="card-container">
+          {contractdata && contractdata.map((item, index) => (
+            <div key={index} className="card my-4">
+              <div className="card-header">
+                <h4>Hash: {item.hash}</h4>
+              </div>
+              <div className="card-body">
+                <p><strong>From:</strong> {item.from}</p>
+                <p><strong>Origin:</strong> {item.origin}</p>
+                <p><strong>Products:</strong> {item.products}</p>
+                <p><strong>Quantities:</strong> {item.quantities}</p>
+                <p><strong>End Date:</strong> {item.endtime}</p>
+                <p><strong>Status:</strong> {item.status}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+           
+            
         </>
     );
 }

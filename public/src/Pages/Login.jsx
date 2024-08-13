@@ -46,18 +46,18 @@ export default function Login(){
                     localStorage.setItem("rolename",values.name);
                     if(pattern1.test(values.name)){
                         
-                        navigate('/DIVISION');
+                        navigate('/');
                     }
                     else if(pattern2.test(values.name)){
                         
-                        navigate("/ADST");
+                        navigate("/");
                     }
                     else{
                         if(values.name=="DGST"){
-                            navigate("/DGST");
+                            navigate("/");
                         }
                         else{
-                            navigate("/MANUFACTURER");
+                            navigate("/");
                         }
                     }
 

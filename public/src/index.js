@@ -1,15 +1,19 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
-import "./index.css"
-import { ConnectionProvider } from './Connection/Connection.js';
+import "./index.css";
 
+
+import { ConnectionProvider } from './Connection/Connection';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
+
 root.render(
   <React.StrictMode>
     <ConnectionProvider>
-         <App />
+      
+        <App />
+      
     </ConnectionProvider>
   </React.StrictMode>
 );

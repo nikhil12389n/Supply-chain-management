@@ -85,15 +85,9 @@ module.exports.register = async (req, res) => {
 
         await sendMail(transporter, mailOptions);
 
-        const token = createToken(user._id);
+       
 
-        res.cookie("jwt", token, {
-            withCredentials: true,
-            httpOnly: false,
-            maxAge: maxAge * 1000,
-        });
-
-        res.status(200).json({ user: user._id, created: true });
+        res.status(200).json({ created: true });
     } catch (err) {
         const errors = handleErrors(err);
         res.json({ errors, created: false });

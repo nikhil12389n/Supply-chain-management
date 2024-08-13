@@ -1,43 +1,58 @@
-/* .modal-overlay {
+.title{
+    max-width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+/* Modal Styles */
+.modal-overlay {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.5);
+    background-color: rgba(0, 0, 0, 0.5);
     display: flex;
-    align-items: center;
     justify-content: center;
+    align-items: center;
+    z-index: 1000;
 }
 
 .modal-content {
-    background: white;
     padding: 20px;
     border-radius: 8px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    width: 300px;
-    text-align: center;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-.modal-content input[type="datetime-local"] {
-    margin: 10px 0;
-    width: 100%;
+.modal-content h2 {
+    margin-bottom: 15px;
+    font-size: 1.5em;
+    color: #333;
+    font-weight: 600;
 }
 
-.modal-content button {
-    margin: 5px;
+.modal-buttons {
+    margin-top: 15px;
+    display: flex;
+    justify-content: flex-end;
 }
 
-.tablereqforsupply th, .tablereqforsupply td {
-    border: 1px solid #dee2e6;
+.modal-buttons button {
+    margin-left: 10px;
+    padding: 8px 16px;
 }
 
-.tablereqforsupply th {
-    background-color: #b8d5f3;
-    color: rgb(34, 33, 33);
-}
+@media (max-width: 768px) {
+    .container {
+        padding: 15px;
+    }
 
-.tablereqforsupply tbody tr:nth-child(even) {
-    background-color: #ecf4fd;
+    .modal-content {
+        width: 95%;
+        padding: 15px;
+    }
 }
- */

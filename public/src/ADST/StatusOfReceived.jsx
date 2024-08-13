@@ -2,57 +2,79 @@ import React, { useContext, useEffect, useState } from 'react';
 import Navbar from '../Navbar';
 import ConnectionContext from '../Connection/Connection';
 import $ from "jquery";
+import { useUser } from '../ContextProvider';
 
 export default function StatusOfReceived () {
-    const { account, contract } = useContext(ConnectionContext);
-    const [contractdata,setcontractdata]=useState([]);
-    useEffect(()=>{
-        let table=$("#statusofreceivedadst").DataTable();
-        const fetchdata = async () => {
+    const { contract } = useContext(ConnectionContext);
+  const [contractdata, setcontractdata] = useState([]);
+  const rolename = useUser();
+
+  useEffect(() => {
+    const Fetchdata = async () => {
+      try {
+        
+        const data = await contract.methods
+          .getallhashes(rolename, 1)
+          .call();
+
+        let findata = [];
+        for (let i = 0; i < data.length; i++) {
+          let temp = await contract.methods
+            .getallreceivedrole(rolename, data[i])
+            .call();
+          findata.push(temp);
+        }
+
+        console.log(findata);
+        const cards = findata.map(async (item) => {
+         
             try {
-                const data = await contract.methods.getallhashes(localStorage.getItem("rolename"),1).call();
-
-               let findata=[];
-               for(let i=0;i<data.length;i++){
-                let temp=await contract.methods.getallreceivedrole(localStorage.getItem("rolename"),data[i]).call();
-                findata.push(temp);
-               }
-               console.log(findata[0]);
-               table.clear();
-               for(let i=0;i<findata.length;i++){
-                table.row.add([findata[i].hash,findata[i].from,findata[i].origin,Object.values(findata[i].products).join(","),Object.values(findata[i].quantities).join(","),findata[i].endtime,findata[i].status]);
-               }
-               table.draw();
-                setcontractdata(data);
+              let d = await contract.methods.check(item.from, item.hash).call();
+              return {
+                ...item
+              };
             } catch (err) {
-                console.log(err);
+              console.log(err);
             }
-        };
+        
+        });
 
-        fetchdata();
-    },[]);
+        const resolvedCards = await Promise.all(cards);
+        resolvedCards.reverse();
+        setcontractdata(resolvedCards);
+      } catch (err) {
+        console.log(err);
+      }
+    };
+
+    Fetchdata();
+  }, [contract]);
+
     return (
         <>
 
         <Navbar/>
-        <h1>Status Of Received</h1>
-
-            <table id="statusofreceivedadst" className="table tablereqforsupply">
-                <thead>
-                    <tr>
-                        <th>Hash</th>
-                        <th>From</th>
-                        <th>Origin</th>
-                        <th>Products</th>
-                        <th>Quantities</th>
-                        <th>End time</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                   
-                </tbody>
-            </table>
+        <h1 className='title'>Status Of Received</h1>
+      <div className="container">
+        
+        <div className="card-container">
+          {contractdata.map((item, index) => (
+            <div key={index} className="card my-4">
+              <div className="card-header">
+                <h4>Hash: {item.hash}</h4>
+              </div>
+              <div className="card-body">
+                <p><strong>From:</strong> {item.from}</p>
+                <p><strong>Origin:</strong> {item.origin}</p>
+                <p><strong>Products:</strong> {Object.values(item.products).join(", ")}</p>
+                <p><strong>Quantities:</strong> {Object.values(item.quantities).join(", ")}</p>
+                <p><strong>End Date:</strong> {item.endtime}</p>
+                <p><strong>Status:</strong> {item.status}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
         </>
     );
 }
